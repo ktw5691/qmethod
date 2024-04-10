@@ -125,7 +125,6 @@ Inspect the 'loa' and 'flagged' tables carefully to see if you missed any flag."
     paste0("Rotation:                ", brief$rotation),
     paste0("Flagging:                Unknown: flagged Q-sorts were provided separately."),
     paste0("Correlation coefficient: ", brief$cor.method))
-  # brief <- paste0("z-scores calculated on ", date(), ". Original data: ", nstat, " statements, ", nqsorts, " Q-sorts. Number of factors: ",nfactors,".")
   qmethodresults <- list()
   qmethodresults[[1]] <- brief
   qmethodresults[[2]] <- dataset

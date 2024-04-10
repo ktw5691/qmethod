@@ -1,7 +1,3 @@
-#### Modification of qmethod.R from aiorazabala/qmethod/master R/qmethod.R commit 2059366
-#### Modification written by Kenneth Tyler Wilcox, Cornell Statistical Consulting Unit, Cornell University, Ithaca, NY
-#### Last updated: 2024 April 09
-
 if (!requireNamespace("qmethod")) stop("`qmethod` R package not installed.")
 
 qmethod <- function(dataset,
@@ -13,6 +9,7 @@ qmethod <- function(dataset,
                     cor.method = "pearson",
                     silent = FALSE,
                     spc = 10 ^ -5,
+                    impute_miss = FALSE,
                     ...) {
   # calculate number of Q sorts and number of statements
   nstat <- nrow(dataset)
@@ -58,16 +55,15 @@ qmethod <- function(dataset,
                           "specialT", "Promax", "promax", "cluster",
                           "biquartimin", "specialQ", "oblimin", "simplimax")
   # Run the analysis
-  cor.data <- cor(dataset, method = cor.method)
+  cor.data <- cor(dataset, method = cor.method, ...)
   if (extraction == "PCA") {
-    # PCA from {psych} for factor loadings
     loa <- unclass(
-      principal(cor.data, nfactors = nfactors, rotate = rotation, ...)$loadings
+      psych::principal(cor.data, nfactors = nfactors, rotate = rotation, ...)$loadings
     )
   }
   if (extraction == "centroid") {
     loa.unr <- unclass(
-      centroid(tmat = cor.data, nfactors = nfactors, spc))
+      qmethod::centroid(tmat = cor.data, nfactors = nfactors, spc))
     if (rotation == "none") {
       loa <- loa.unr
     } else if (rotation == "varimax") {
@@ -78,10 +74,11 @@ qmethod <- function(dataset,
   }
   colnames(loa) <- paste0("f", 1:ncol(loa))
   # The following depends on the qmethod functions: qflag, qzscores, qfcharact, qdc
-  flagged <- qflag(loa = loa, nstat = nstat)
+  flagged <- qmethod::qflag(loa = loa, nstat = nstat)
   qmethodresults <- qzscores(dataset, nfactors, flagged = flagged,
                              loa = loa, forced = forced,
-                             distribution = distribution)
+                             distribution = distribution,
+                             impute_miss = impute_miss)
   if (extraction == "PCA") qmethodresults$brief$extraction <- extraction
   if (extraction == "centroid")
     qmethodresults$brief$extraction <- paste0(
@@ -89,6 +86,7 @@ qmethod <- function(dataset,
   qmethodresults$brief$rotation    <- rotation
   qmethodresults$brief$flagging    <- "automatic"
   qmethodresults$brief$cor.method  <- cor.method
+  qmethodresults$brief$impute_miss <- impute_miss
   qmethodresults$brief$pkg.version <- packageVersion('qmethod')
   qmethodresults$brief$info        <- c(
     "Q-method analysis.",
@@ -101,7 +99,8 @@ qmethod <- function(dataset,
     paste0("Extraction:                ", qmethodresults$brief$extraction),
     paste0("Rotation:                  ", qmethodresults$brief$rotation),
     paste0("Flagging:                  ", qmethodresults$brief$flagging),
-    paste0("Correlation coefficient:   ", qmethodresults$brief$cor.method))
+    paste0("Correlation coefficient:   ", qmethodresults$brief$cor.method),
+    paste0("Sort item mean imputation: ", qmethodresults$brief$impute_miss))
   qmethodresults[[8]] <- qdc(dataset, nfactors, zsc = qmethodresults$zsc,
                              sed = qmethodresults$f_char$sd_dif)
   names(qmethodresults)[8] <- "qdc"

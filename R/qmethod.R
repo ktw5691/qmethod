@@ -55,7 +55,9 @@ qmethod <- function(dataset,
                           "specialT", "Promax", "promax", "cluster",
                           "biquartimin", "specialQ", "oblimin", "simplimax")
   # Run the analysis
-  cor.data <- cor(dataset, method = cor.method, ...)
+  use <- "everything" # Default
+  if (impute_miss) use <- "pairwise.complete.obs"
+  cor.data <- cor(dataset, method = cor.method, use = use)
   if (extraction == "PCA") {
     loa <- unclass(
       psych::principal(cor.data, nfactors = nfactors, rotate = rotation, ...)$loadings

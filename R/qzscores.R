@@ -1,10 +1,11 @@
 # calculates final z-scores and factor scores, and extracts main results for Q method
-qzscores_miss <- function(dataset,
-                          nfactors,
-                          loa,
-                          flagged,
-                          forced = TRUE,
-                          distribution = NULL) {
+qzscores <- function(dataset,
+                     nfactors,
+                     loa,
+                     flagged,
+                     forced = TRUE,
+                     distribution = NULL,
+                     impute_miss = FALSE) {
   # Validation checks
   if (0 %in% colSums(flagged))
     warning("Q analysis: One or more of the factors extracted have no flagged Q-sorts and no statement calculations can be made on that specific factor.
@@ -40,9 +41,13 @@ Inspect the 'loa' and 'flagged' tables carefully to see if you missed any flag."
   row.names(zsc_std) <- row.names(dataset)
   n <- 1
   while (n <= ncol(floa)) {
-    zsc_sum[, n] <-      rowSums(wraw_all[[n]])
-    zsc_mea[, n] <- mean(rowSums(wraw_all[[n]]))
-    zsc_std[, n] <-   sd(rowSums(wraw_all[[n]]))
+    if (impute_miss) {
+      zsc_sum[, n] <- rowMeans(wraw_all[[n]], na.rm = TRUE) * nqsorts
+    } else {
+      zsc_sum[, n] <- rowSums(wraw_all[[n]])
+    }
+    zsc_mea[, n] <- mean(zsc_sum[, n])
+    zsc_std[, n] <-   sd(zsc_sum[, n])
     n <- n + 1
   }
   colnames(zsc_sum) <- paste("z_sum_", c(1:ncol(floa)), sep = "")
